@@ -3,7 +3,6 @@ package natmode
 import (
 	"log"
 
-	helper "github.com/S-Unknown047/LoadBalancer/Helper"
 	model "github.com/S-Unknown047/LoadBalancer/Model"
 	"github.com/google/gopacket/layers"
 )
@@ -49,9 +48,9 @@ func Test() {
 		// 4. Cast the layer to access TCP headers (Ports, Flags)
 		tcp := tcpLayer.(*layers.TCP)
 		if string(ipv4.DstIP) == "192.168.1.102" {
-			serv := helper.Check(string(ipv4.SrcIP), b)
+			serv := b.Check(string(ipv4.SrcIP))
 			if serv != nil {
-
+				serv.Connection++
 			}
 		}
 		log.Printf("Captured Request: %s:%d -> %s:%d (SYN: %t)",
