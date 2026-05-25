@@ -60,7 +60,7 @@ func GetserverCount() uint64 {
 	return serverCount
 }
 
-func updateServerCount(mu *sync.Mutex, n uint64) {
+func UpdateServerCount(mu *sync.Mutex, n uint64) {
 	mu.Lock()
 	serverCount = (serverCount + 1) % n
 	mu.Unlock()

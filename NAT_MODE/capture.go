@@ -8,8 +8,8 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
-// StartCapture opens a network interface and returns a channel of raw packets.
-func StartCapture(device string, bpfFilter string) (chan gopacket.Packet, error) {
+// StartCapture opens a network interface and returns a handle and a channel of raw packets.
+func StartCapture(device string, bpfFilter string) (*pcap.Handle, chan gopacket.Packet, error) {
 	// 1. Configuration variables
 
 	var snapshotLen int32 = 65535                // Capture the entire packet
@@ -22,7 +22,7 @@ func StartCapture(device string, bpfFilter string) (chan gopacket.Packet, error)
 	// after which interval i caturing the request
 	handle, err := pcap.OpenLive(device, snapshotLen, promiscuous, timeout)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// 3. Apply the BPF (Berkeley Packet Filter)\
@@ -39,6 +39,6 @@ func StartCapture(device string, bpfFilter string) (chan gopacket.Packet, error)
 	// Create the packet source
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 
-	// Return the channel so the main router can loop over incoming packets
-	return packetSource.Packets(), nil
+	// Return the handle and the channel so the main router can loop over incoming packets
+	return handle, packetSource.Packets(), nil
 }

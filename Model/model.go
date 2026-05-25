@@ -41,3 +41,25 @@ func (b *Backend) Check(ip string) *Server {
 	}
 	return nil
 }
+
+var portCount uint64 = 49152
+
+type IpAndPort struct {
+	IP   string
+	Port uint64
+}
+
+func UpdatePort(mu *sync.Mutex) uint64 {
+	mu.Lock()
+	portCount = portCount + 1
+	if portCount == 65535 {
+		portCount = 49152
+	}
+	defer mu.Unlock()
+
+	return portCount
+}
+
+func GetPort() uint64 {
+	return portCount
+}
