@@ -1,6 +1,7 @@
 package natmode
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -58,58 +59,96 @@ func Test() {
 
 		// 4. Cast the layer to access TCP headers (Ports, Flags)
 		tcp := tcpLayer.(*layers.TCP)
-        
+
 		if ipv4.DstIP.String() == vipIP && tcp.DstPort.String() == "80" {
-		log.Printf("Captured Request: %s:%d -> %s:%d (SYN: %t)",
-			ipv4.SrcIP, tcp.SrcPort,
-			ipv4.DstIP, tcp.DstPort,
-			tcp.SYN)
-
-		// Choose IP and Port using Round Robin algorithm
-
-		// Set the new source IP and port (Load Balancer IP and Port)
-		ipv4.SrcIP = net.ParseIP(vipIP)
-		tcp.SrcPort = layers.TCPPort(model.GetPort()) // Assuming load balancer port is 80
-
-		// Set the new destination IP and port (Chosen Server IP and Port)
-		ipv4.DstIP = net.ParseIP(chosenIP)
-		tcp.DstPort = layers.TCPPort(chosenPort)
-
-		// Set the network layer for TCP checksum calculation
-		err = tcp.SetNetworkLayerForChecksum(ipv4)
-		if err != nil {
-			log.Printf("Failed to set network layer for checksum: %v", err)
-			continue
-		}
-
-		// Serialize the modified packet
-		options := gopacket.SerializeOptions{
-			ComputeChecksums: true,
-			FixLengths:       true,
-		}
-		buffer := gopacket.NewSerializeBuffer()
-		err = gopacket.SerializeLayers(buffer, options,
-			ipv4,
-			tcp,
-			gopacket.Payload(tcp.Payload),
-		)
-		if err != nil {
-			log.Printf("Failed to serialize packet: %v", err)
-			continue
-		}
-
-		// Forward the request to the server
-		err = handle.WritePacketData(buffer.Bytes())
-		if err != nil {
-			log.Printf("Failed to write packet data: %v", err)
-		} else {
-			log.Printf("Forwarded Request: %s:%d -> %s:%d",
+			log.Printf("Captured Request: %s:%d -> %s:%d (SYN: %t)",
 				ipv4.SrcIP, tcp.SrcPort,
-				ipv4.DstIP, tcp.DstPort)
-		}
-	} else if ipv4.DstIP.String() ==  vipIP && <=tcp.DstPort.String() {
+				ipv4.DstIP, tcp.DstPort,
+				tcp.SYN)
 
-	}
+			// Choose IP and Port using Round Robin algorithm
+
+			// Set the new source IP and port (Load Balancer IP and Port)
+			ipv4.SrcIP = net.ParseIP(vipIP)
+			tcp.SrcPort = layers.TCPPort(model.GetPort()) // Assuming load balancer port is 80
+
+			// Set the new destination IP and port (Chosen Server IP and Port)
+			ipv4.DstIP = net.ParseIP(chosenIP)
+			tcp.DstPort = layers.TCPPort(chosenPort)
+
+			// Set the network layer for TCP checksum calculation
+			err = tcp.SetNetworkLayerForChecksum(ipv4)
+			if err != nil {
+				log.Printf("Failed to set network layer for checksum: %v", err)
+				continue
+			}
+
+			// Serialize the modified packet
+			options := gopacket.SerializeOptions{
+				ComputeChecksums: true,
+				FixLengths:       true,
+			}
+			buffer := gopacket.NewSerializeBuffer()
+			err = gopacket.SerializeLayers(buffer, options,
+				ipv4,
+				tcp,
+				gopacket.Payload(tcp.Payload),
+			)
+			if err != nil {
+				log.Printf("Failed to serialize packet: %v", err)
+				continue
+			}
+
+			// Forward the request to the server
+			err = handle.WritePacketData(buffer.Bytes())
+			if err != nil {
+				log.Printf("Failed to write packet data: %v", err)
+			} else {
+				log.Printf("Forwarded Request: %s:%d -> %s:%d",
+					ipv4.SrcIP, tcp.SrcPort,
+					ipv4.DstIP, tcp.DstPort)
+			}
+		} else if val, _ := strconv.Atoi(tcp.DstPort.String()); 49152 <= val && val < int(model.GetPort()) {
+			connect := GetIpAndPort(uint16(val))
+
+			if connect == nil {
+				fmt.Println("wrong connected")
+			}
+			ipv4.SrcIP = net.ParseIP(vipIP)
+			tcp.SrcPort = layers.TCPPort(80)
+
+			ipv4.DstIP = net.ParseIP(connect.IP)
+			tcp.DstPort = layers.TCPPort(connect.Port)
+
+			err = tcp.SetNetworkLayerForChecksum(ipv4)
+
+			options := gopacket.SerializeOptions{
+				ComputeChecksums: true,
+				FixLengths:       true,
+			}
+
+			buffer := gopacket.NewSerializeBuffer()
+			err = gopacket.SerializeLayers(buffer, options,
+				ipv4,
+				tcp,
+				gopacket.Payload(tcp.Payload),
+			)
+
+			if err != nil {
+				log.Printf("Failed to serialize packet: %v", err)
+				continue
+			}
+
+			// Forward the request to the server
+			err = handle.WritePacketData(buffer.Bytes())
+			if err != nil {
+				log.Printf("Failed to write packet data: %v", err)
+			} else {
+				log.Printf("Forwarded Request: %s:%d -> %s:%d",
+					ipv4.SrcIP, tcp.SrcPort,
+					ipv4.DstIP, tcp.DstPort)
+			}
+		}
 	}
 
 }
