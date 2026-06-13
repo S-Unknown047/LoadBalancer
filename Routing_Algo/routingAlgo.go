@@ -22,6 +22,7 @@ func RoundRobin(b *model.Backend) (ip string, port string) {
 }
 
 func GetServerIpAndPort(b *model.Backend) (string, string) {
+
 	algo := b.Algo
 	var ip string
 	var port string
@@ -29,9 +30,12 @@ func GetServerIpAndPort(b *model.Backend) (string, string) {
 	case "RoundRobin":
 		ip, port = RoundRobin(b)
 		break
+	case "":
+		break
 	default:
 		log.Fatal("Not a right server")
 		return "", ""
 	}
 	return ip, port
+
 }
