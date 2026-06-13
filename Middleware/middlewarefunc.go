@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -17,7 +18,9 @@ func GetServerPath(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	for _, value := range output {
+		fmt.Println(value)
+	}
 	helper.HandelServer(&output)
 }
 
@@ -29,6 +32,5 @@ func GetServerSetup(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	helper.HandelSetup(&setup)
-}
+} 

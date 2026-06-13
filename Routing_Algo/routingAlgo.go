@@ -1,6 +1,7 @@
 package routingalgo
 
 import (
+	"log"
 	"sync"
 	"sync/atomic"
 
@@ -17,5 +18,20 @@ func RoundRobin(b *model.Backend) (ip string, port string) {
 	port = (*b.Servers)[serverCount].Port
 	helper.UpdateServerCount(&Mu, b.TotalServer)
 	atomic.AddUint64(&(b.TotalServerConnection), 1)
+	return ip, port
+}
+
+func GetServerIpAndPort(b *model.Backend) (string, string) {
+	algo := b.Algo
+	var ip string
+	var port string
+	switch algo {
+	case "RoundRobin":
+		ip, port = RoundRobin(b)
+		break
+	default:
+		log.Fatal("Not a right server")
+		return "", ""
+	}
 	return ip, port
 }

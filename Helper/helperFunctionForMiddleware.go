@@ -14,6 +14,7 @@ import (
 //		}
 //		return nil
 //	}
+var Flag bool = false
 var serverCount uint64 = 0
 var BackendData model.Backend
 var ServerData []model.Server
@@ -43,10 +44,10 @@ func storingServer(obj *[]model.ReqServer) *[]model.Server {
 
 func HandelSetup(obj *model.ReqSetup) {
 	BackendData = *backendSetup(obj, &ServerData)
-
 }
 
 func backendSetup(obj *model.ReqSetup, server *[]model.Server) *model.Backend {
+	defer func() { Flag = true }()
 	var tempBackend model.Backend
 	tempBackend.Servers = server
 	tempBackend.Algo = obj.Algo
