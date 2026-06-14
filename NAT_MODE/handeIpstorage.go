@@ -6,6 +6,10 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
+
+	helper "github.com/S-Unknown047/LoadBalancer/Helper"
+	model "github.com/S-Unknown047/LoadBalancer/Model"
 )
 
 type ConnectionState struct {
@@ -17,6 +21,32 @@ type ConnectionState struct {
 var clientToBackendMap = make(map[string]ConnectionState)
 var portToClientMap = make(map[uint16]string)
 var ipAndPortMapMu sync.Mutex
+
+func RemoveConnection(clientIP string, clientPort uint16, portMap uint16, b *model.Backend) {
+	ipAndPortMapMu.Lock()
+	key := fmt.Sprintf("%s:%d", clientIP, clientPort)
+	state, exists := clientToBackendMap[key]
+	if !exists {
+		ipAndPortMapMu.Unlock()
+		return
+	}
+	delete(clientToBackendMap, key)
+	delete(portToClientMap, portMap)
+	ipAndPortMapMu.Unlock()
+
+	for i := range *b.Servers {
+		srv := &(*b.Servers)[i]
+		temp, _ := strconv.Atoi(srv.Port)
+		port := uint16(temp)
+
+		if srv.IP == state.BackendIP && port == state.BackendPort {
+			atomic.AddUint64(&srv.Connection, ^uint64(0)) // Atomic decrement by 1
+			helper.HeapFix(srv)
+			atomic.AddUint64(&b.TotalServerConnection, ^uint64(0)) // Atomic decrement by 1
+			break
+		}
+	}
+}
 
 func GetOrAssignConnection(clientIP string, clientPort uint16, assignBackend func() (string, uint16, uint16)) ConnectionState {
 	key := fmt.Sprintf("%s:%d", clientIP, clientPort)

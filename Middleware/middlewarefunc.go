@@ -33,4 +33,4 @@ func GetServerSetup(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	helper.HandelSetup(&setup)
-} 
+}

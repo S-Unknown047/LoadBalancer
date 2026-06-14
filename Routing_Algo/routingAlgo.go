@@ -21,6 +21,15 @@ func RoundRobin(b *model.Backend) (ip string, port string) {
 	return ip, port
 }
 
+func LeastConnectionServer(b *model.Backend) (string, string) {
+	server := helper.GetServer()
+	if server == nil {
+		return "", ""
+	}
+	atomic.AddUint64(&(b.TotalServerConnection), 1)
+	return server.IP, server.Port
+}
+
 func GetServerIpAndPort(b *model.Backend) (string, string) {
 
 	algo := b.Algo
@@ -30,7 +39,8 @@ func GetServerIpAndPort(b *model.Backend) (string, string) {
 	case "RoundRobin":
 		ip, port = RoundRobin(b)
 		break
-	case "":
+	case "LeastConnection":
+		ip, port = LeastConnectionServer(b)
 		break
 	default:
 		log.Fatal("Not a right server")

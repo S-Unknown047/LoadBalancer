@@ -1,9 +1,10 @@
 package helper
 
 import (
-	"sync"
+	"time"
 
 	model "github.com/S-Unknown047/LoadBalancer/Model"
+	testing "github.com/S-Unknown047/LoadBalancer/ServerTesting"
 )
 
 //	func Check(ip string, b *model.Backend) *model.Server {
@@ -14,8 +15,8 @@ import (
 //		}
 //		return nil
 //	}
+
 var Flag bool = false
-var serverCount uint64 = 0
 var BackendData model.Backend
 var ServerData []model.Server
 
@@ -47,22 +48,39 @@ func HandelSetup(obj *model.ReqSetup) {
 }
 
 func backendSetup(obj *model.ReqSetup, server *[]model.Server) *model.Backend {
-	defer func() { Flag = true }()
+	defer func() {
+		Flag = true
+
+	}()
 	var tempBackend model.Backend
 	tempBackend.Servers = server
 	tempBackend.Algo = obj.Algo
 	tempBackend.Mode = obj.ModeBalance
 	tempBackend.TotalServer = (uint64)(len((*server)))
 	tempBackend.TotalServerConnection = 0
+
+	Checker()
+
+	if obj.Algo == "LeastConnection" {
+		EnterData(&ServerData)
+	}
+
 	return &tempBackend
 }
 
-func GetserverCount() uint64 {
-	return serverCount
-}
-
-func UpdateServerCount(mu *sync.Mutex, n uint64) {
-	mu.Lock()
-	serverCount = (serverCount + 1) % n
-	mu.Unlock()
+func Checker() {
+	testing.ServerupAliveServer(&ServerData)
+	ServerData = testing.ServerTest()
+	ticker := time.NewTicker(20 * time.Second)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				ServerData = testing.ServerTest()
+				if BackendData.Algo == "LeastConnection" {
+					EnterData(&ServerData)
+				}
+			}
+		}
+	}()
 }

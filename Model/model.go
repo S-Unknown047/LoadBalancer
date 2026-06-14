@@ -16,6 +16,7 @@ type Server struct {
 	Connection uint64
 	Weight     uint64
 	mu         *sync.Mutex
+	Index      int
 	// Response_time time.Duration
 }
 

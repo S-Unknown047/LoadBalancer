@@ -106,11 +106,13 @@ func Test() {
 
 			clientIP := ipv4.SrcIP.String()
 			clientPort := uint16(tcp.SrcPort)
+
 			// it is calling the round robin algrithom and getting the backend ip and port
 			// check where ip+port is already present or not
 			// if present than return same server else return differnt server with round robin
+
 			state := GetOrAssignConnection(clientIP, clientPort, func() (string, uint16, uint16) {
-				chosenIP, chosenPortStr := routingalgo.RoundRobin(b)
+				chosenIP, chosenPortStr := routingalgo.GetServerIpAndPort(b)
 				chosenPort, err := strconv.Atoi(chosenPortStr)
 				if err != nil {
 					log.Printf("Invalid port returned by round robin: %v", err)
@@ -126,13 +128,14 @@ func Test() {
 				dstIP:      state.BackendIP,
 				dstPort:    state.BackendPort,
 			}
-			fmt.Printf("inside client -> server: forwarding to %s:%d using mapped port %d\n", state.BackendIP, state.BackendPort, state.MappedPort)
+
+			// fmt.Printf("inside client -> server: forwarding to %s:%d using mapped port %d\n", state.BackendIP, state.BackendPort, state.MappedPort)
 			go requestSend(connection, serializableLinkLayer, ipv4, tcp, handle)
 
 		} else if ipv4.DstIP.String() == translationIP && 49152 <= tcp.DstPort {
 
 			clientIP, clientPort, exists := GetClientByMappedPort(uint16(tcp.DstPort))
-
+			portMap := uint16(tcp.DstPort)
 			if !exists {
 				continue
 			}
@@ -147,6 +150,10 @@ func Test() {
 			}
 
 			go requestSend(connection, serializableLinkLayer, ipv4, tcp, handle)
+
+			if tcp.FIN {
+				RemoveConnection(clientIP, clientPort, portMap, b)
+			}
 		}
 	}
 
