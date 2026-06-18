@@ -18,5 +18,7 @@ func Routing() *http.ServeMux {
 
 	router.HandleFunc("POST /server/setup", middlewar.GetServerSetup)
 
+	// router.HandleFunc("/proxyLoadBalancer", );
+
 	return router
 }
