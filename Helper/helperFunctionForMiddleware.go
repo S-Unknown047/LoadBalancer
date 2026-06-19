@@ -54,14 +54,22 @@ func backendSetup(obj *model.ReqSetup, server *[]model.Server) *model.Backend {
 	}()
 	var tempBackend model.Backend
 	tempBackend.Servers = server
-	tempBackend.Algo = obj.Algo
+
+	algo := obj.Algo
+	if algo == "rr" || algo == "RoundRobin" {
+		algo = "RoundRobin"
+	} else if algo == "lc" || algo == "LeastConnection" {
+		algo = "LeastConnection"
+	}
+	tempBackend.Algo = algo
+
 	tempBackend.Mode = obj.ModeBalance
 	tempBackend.TotalServer = (uint64)(len((*server)))
 	tempBackend.TotalServerConnection = 0
 
 	Checker()
 
-	if obj.Algo == "LeastConnection" {
+	if algo == "LeastConnection" {
 		EnterData(&ServerData)
 	}
 

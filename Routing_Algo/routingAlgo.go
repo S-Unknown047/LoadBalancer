@@ -36,10 +36,10 @@ func GetServerIpAndPort(b *model.Backend) (string, string) {
 	var ip string
 	var port string
 	switch algo {
-	case "RoundRobin":
+	case "RoundRobin", "rr":
 		ip, port = RoundRobin(b)
 		break
-	case "LeastConnection":
+	case "LeastConnection", "lc":
 		ip, port = LeastConnectionServer(b)
 		break
 	default:

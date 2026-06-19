@@ -48,3 +48,12 @@ func GetOrAssignConnection(host string, port string) (string, uint16) {
 
 	return states.BackendIp, states.BackendPort
 }
+
+func filterPath(path string) string {
+	var Path_ string
+	Path_ = ""
+	for i := 18; i < len(path); i++ {
+		Path_ += string(path[i])
+	}
+	return Path_
+}

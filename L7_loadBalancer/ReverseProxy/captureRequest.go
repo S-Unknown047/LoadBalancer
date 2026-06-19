@@ -25,7 +25,7 @@ func CaptureProxy(w http.ResponseWriter, r *http.Request) {
 	Serverhost := url.Host
 
 	dstIp, dstPort := GetOrAssignConnection(Serverhost, Clientport)
-	url_ := fmt.Sprintf("%s:%d/%s", dstIp, dstPort, receiverUrlPath)
+	url_ := fmt.Sprintf("http://%s:%d%s", dstIp, dstPort, filterPath(receiverUrlPath))
 
 	req, err := http.NewRequest(r.Method, url_, r.Body)
 
@@ -40,6 +40,7 @@ func CaptureProxy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ipAddr, _, err := net.SplitHostPort(r.RemoteAddr)
+
 	if err != nil {
 		fmt.Println("error while getting address")
 	}
