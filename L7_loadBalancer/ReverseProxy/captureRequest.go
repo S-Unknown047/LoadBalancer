@@ -7,7 +7,13 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	helper "github.com/S-Unknown047/LoadBalancer/Helper"
+	model "github.com/S-Unknown047/LoadBalancer/Model"
+	routingalgo "github.com/S-Unknown047/LoadBalancer/Routing_Algo"
 )
+
+var b *model.Backend = &helper.BackendData
 
 func CaptureProxy(w http.ResponseWriter, r *http.Request) {
 
@@ -20,12 +26,13 @@ func CaptureProxy(w http.ResponseWriter, r *http.Request) {
 		Timeout: 30 * time.Second,
 	}
 	url := r.URL
-	Clientport := url.Port()
+	// Clientport := url.Port()
 	receiverUrlPath := url.Path
 	Serverhost := url.Host
 
-	dstIp, dstPort := GetOrAssignConnection(Serverhost, Clientport)
-	url_ := fmt.Sprintf("http://%s:%d%s", dstIp, dstPort, filterPath(receiverUrlPath))
+	dstIp, dstPort := routingalgo.GetServerIpAndPort(b)
+
+	url_ := fmt.Sprintf("http://%s:%s%s", dstIp, dstPort, filterPath(receiverUrlPath))
 
 	req, err := http.NewRequest(r.Method, url_, r.Body)
 
@@ -40,7 +47,6 @@ func CaptureProxy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ipAddr, _, err := net.SplitHostPort(r.RemoteAddr)
-
 	if err != nil {
 		fmt.Println("error while getting address")
 	}
@@ -68,4 +74,13 @@ func CaptureProxy(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(res.StatusCode)
 
 	io.Copy(w, res.Body)
+}
+
+func filterPath(path string) string {
+	var Path_ string
+	Path_ = ""
+	for i := 18; i < len(path); i++ {
+		Path_ += string(path[i])
+	}
+	return Path_
 }

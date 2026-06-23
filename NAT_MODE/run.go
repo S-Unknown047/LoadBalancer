@@ -218,10 +218,6 @@ func requestSend(connection *conn, linkLayer gopacket.SerializableLayer, ipv4 *l
 	err = syscall.Sendto(rawSocketFd, buffer.Bytes(), 0, &addr)
 	if err != nil {
 		log.Printf("Failed to send packet via raw socket: %v", err)
-		log.Printf("[DEBUG] Sendto details: len(bytes)=%d, dstIP=%s, dstPort=%d, addr.Addr=%v, addr.Port=%d",
-			len(buffer.Bytes()), dstIP, dstPort, addr.Addr, addr.Port)
-		log.Printf("[DEBUG] IPv4 Header: Version=%d, IHL=%d, Length=%d, Protocol=%d, SrcIP=%s, DstIP=%s",
-			ipv4.Version, ipv4.IHL, ipv4.Length, ipv4.Protocol, ipv4.SrcIP, ipv4.DstIP)
 	} else {
 		fmt.Println("Sucessfull")
 	}
