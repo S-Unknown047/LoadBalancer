@@ -30,8 +30,10 @@ type conn struct {
 	dstPort    uint16
 }
 
-func Init() {
+func Init(grp *sync.WaitGroup) {
+	defer grp.Done()
 
+	fmt.Println("NAT Mode Initializing")
 	if <-helper.FlagBackend() && <-helper.FlagServer() {
 		InitNatMode()
 	}
@@ -115,6 +117,11 @@ func InitNatMode() {
 			clientIP := ipv4.SrcIP.String()
 			clientPort := uint16(tcp.SrcPort)
 
+			// if !helper.ConnectionExists(clientIP, clientPort) && !tcp.SYN {
+			// 	fmt.Printf("Ignoring orphan TCP packet (no connection mapping and not a SYN): %s:%d -> %s:%d\n", ipv4.SrcIP, tcp.SrcPort, ipv4.DstIP, tcp.DstPort)
+			// 	continue
+			// }
+
 			// it is calling the round robin algrithom and getting the backend ip and port
 			// check where ip+port is already present or not
 			// if present than return same server else return differnt server with round robin
@@ -143,7 +150,7 @@ func InitNatMode() {
 		} else if ipv4.DstIP.String() == translationIP && 49152 <= tcp.DstPort {
 
 			clientIP, clientPort, exists := helper.GetClientByMappedPort(uint16(tcp.DstPort))
-			portMap := uint16(tcp.DstPort)
+			// portMap := uint16(tcp.DstPort)
 			if !exists {
 				continue
 			}
@@ -159,9 +166,9 @@ func InitNatMode() {
 
 			go requestSend(connection, serializableLinkLayer, ipv4, tcp, handle)
 
-			if tcp.FIN {
-				helper.RemoveConnection(clientIP, clientPort, portMap, b)
-			}
+			// if tcp.FIN {
+			// 	helper.RemoveConnection(clientIP, clientPort, portMap, b)
+			// }
 		}
 	}
 

@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -27,13 +28,13 @@ func HandelServer(obj *[]model.ReqServer) {
 }
 
 func FlagBackend() chan bool {
-	var FlagChan = make(chan bool)
+	var FlagChan = make(chan bool, 1)
 	FlagChan <- true
 	return FlagChan
 }
 
 func FlagServer() chan bool {
-	var FlagChan = make(chan bool)
+	var FlagChan = make(chan bool, 1)
 	FlagChan <- true
 	return FlagChan
 }
@@ -111,4 +112,12 @@ func Checker() {
 			}
 		}
 	}()
+}
+
+func ConnectionExists(clientIP string, clientPort uint16) bool {
+	key := fmt.Sprintf("%s:%d", clientIP, clientPort)
+	ipAndPortMapMu.Lock()
+	defer ipAndPortMapMu.Unlock()
+	_, exists := clientToBackendMap[key]
+	return exists
 }
