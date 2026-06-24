@@ -27,8 +27,8 @@ type ReqServer struct {
 }
 
 type ReqSetup struct {
-	Algo        string
-	ModeBalance string // what is the balance to use  l4 or l7
+	Algo string
+	// ModeBalance string // what is the balance to use  l4 or l7
 }
 
 func (b *Backend) Check(ip string) *Server {

@@ -1,10 +1,11 @@
 package helper
 
 import (
+	"log"
+	"os"
 	"time"
 
-	model "github.com/S-Unknown047/LoadBalancer/Model"
-	testing "github.com/S-Unknown047/LoadBalancer/ServerTesting"
+	model "github.com/S-Unknown047/LoadBalancer/internal/model"
 )
 
 //	func Check(ip string, b *model.Backend) *model.Server {
@@ -16,15 +17,30 @@ import (
 //		return nil
 //	}
 
-var Flag bool = false
 var BackendData model.Backend
 var ServerData []model.Server
 
 func HandelServer(obj *[]model.ReqServer) {
-	ServerData = *storingServer(obj)
+	newServer := storingServer(obj)
+	ServerData = append(ServerData, newServer...)
+
 }
 
-func storingServer(obj *[]model.ReqServer) *[]model.Server {
+func FlagBackend() chan bool {
+	var FlagChan = make(chan bool)
+	FlagChan <- true
+	return FlagChan
+}
+
+func FlagServer() chan bool {
+	var FlagChan = make(chan bool)
+	FlagChan <- true
+	return FlagChan
+}
+
+func storingServer(obj *[]model.ReqServer) []model.Server {
+	defer FlagServer()
+
 	output := make([]model.Server, 0, len(*obj))
 	for _, val := range *obj {
 		ip := val.IP
@@ -40,7 +56,7 @@ func storingServer(obj *[]model.ReqServer) *[]model.Server {
 		output = append(output, temp)
 	}
 
-	return &output
+	return output
 }
 
 func HandelSetup(obj *model.ReqSetup) {
@@ -48,22 +64,26 @@ func HandelSetup(obj *model.ReqSetup) {
 }
 
 func backendSetup(obj *model.ReqSetup, server *[]model.Server) *model.Backend {
-	defer func() {
-		Flag = true
+	defer FlagBackend()
 
-	}()
+	if len(*server) == 0 {
+		log.Fatal("Error no server Present use addserver cmd to add servers")
+		os.Exit(1)
+	}
 	var tempBackend model.Backend
 	tempBackend.Servers = server
 
 	algo := obj.Algo
+
 	if algo == "rr" || algo == "RoundRobin" {
 		algo = "RoundRobin"
 	} else if algo == "lc" || algo == "LeastConnection" {
 		algo = "LeastConnection"
 	}
+
 	tempBackend.Algo = algo
 
-	tempBackend.Mode = obj.ModeBalance
+	// tempBackend.Mode = obj.ModeBalance
 	tempBackend.TotalServer = (uint64)(len((*server)))
 	tempBackend.TotalServerConnection = 0
 
@@ -77,14 +97,14 @@ func backendSetup(obj *model.ReqSetup, server *[]model.Server) *model.Backend {
 }
 
 func Checker() {
-	testing.ServerupAliveServer(&ServerData)
-	ServerData = testing.ServerTest()
+	ServerupAliveServer(&ServerData)
+	ServerData = ServerTest()
 	ticker := time.NewTicker(20 * time.Second)
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				ServerData = testing.ServerTest()
+				ServerData = ServerTest()
 				if BackendData.Algo == "LeastConnection" {
 					EnterData(&ServerData)
 				}

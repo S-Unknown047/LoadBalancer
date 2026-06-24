@@ -1,4 +1,4 @@
-package natmode
+package proxy
 
 import (
 	"log"

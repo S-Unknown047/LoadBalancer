@@ -1,4 +1,4 @@
-package reverseproxy
+package proxy
 
 import (
 	"fmt"
@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	helper "github.com/S-Unknown047/LoadBalancer/Helper"
-	model "github.com/S-Unknown047/LoadBalancer/Model"
-	routingalgo "github.com/S-Unknown047/LoadBalancer/Routing_Algo"
+	helper "github.com/S-Unknown047/LoadBalancer/internal/helper"
+	model "github.com/S-Unknown047/LoadBalancer/internal/model"
+	routingalgo "github.com/S-Unknown047/LoadBalancer/internal/routingAlgo"
 )
 
 var b *model.Backend = &helper.BackendData

@@ -1,20 +1,22 @@
-package natmode
+package proxy
 
 import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"sync"
 
 	"syscall"
 
-	helper "github.com/S-Unknown047/LoadBalancer/Helper"
-	model "github.com/S-Unknown047/LoadBalancer/Model"
-	routingalgo "github.com/S-Unknown047/LoadBalancer/Routing_Algo"
+	helper "github.com/S-Unknown047/LoadBalancer/internal/helper"
+	model "github.com/S-Unknown047/LoadBalancer/internal/model"
+	routingalgo "github.com/S-Unknown047/LoadBalancer/internal/routingAlgo"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	"github.com/joho/godotenv"
 )
 
 var b *model.Backend = &helper.BackendData
@@ -26,6 +28,14 @@ type conn struct {
 	senderPort uint16
 	dstIP      string
 	dstPort    uint16
+}
+
+func Init() {
+
+	if <-helper.FlagBackend() && <-helper.FlagServer() {
+		InitNatMode()
+	}
+
 }
 
 func initRawSocket() {
@@ -40,19 +50,17 @@ func initRawSocket() {
 	rawSocketFd = fd
 }
 
-func Test() {
+func InitNatMode() {
 	initRawSocket()
 
 	// Specify your network interface (e.g., "eth0", "wlan0", or "lo")
-	// busy waiting
-	for !helper.Flag {
-	}
+	godotenv.Load()
 
-	device := "lo"
+	device := os.Getenv("DEVICE_TYPE")
 
-	vipIP := "192.168.1.100"
+	vipIP := os.Getenv("VIP")
 
-	translationIP := "127.0.0.2"
+	translationIP := os.Getenv("TRANSLATION_IP")
 
 	// Berkeley Packet Filter (BPF) is a filter check all the packets at the data link layer and filter out the packets
 	// so that only required packet reached the kernel or application
@@ -111,7 +119,7 @@ func Test() {
 			// check where ip+port is already present or not
 			// if present than return same server else return differnt server with round robin
 
-			state := GetOrAssignConnection(clientIP, clientPort, func() (string, uint16, uint16) {
+			state := helper.GetOrAssignConnection(clientIP, clientPort, func() (string, uint16, uint16) {
 				chosenIP, chosenPortStr := routingalgo.GetServerIpAndPort(b)
 				chosenPort, err := strconv.Atoi(chosenPortStr)
 				if err != nil {
@@ -134,7 +142,7 @@ func Test() {
 
 		} else if ipv4.DstIP.String() == translationIP && 49152 <= tcp.DstPort {
 
-			clientIP, clientPort, exists := GetClientByMappedPort(uint16(tcp.DstPort))
+			clientIP, clientPort, exists := helper.GetClientByMappedPort(uint16(tcp.DstPort))
 			portMap := uint16(tcp.DstPort)
 			if !exists {
 				continue
@@ -152,7 +160,7 @@ func Test() {
 			go requestSend(connection, serializableLinkLayer, ipv4, tcp, handle)
 
 			if tcp.FIN {
-				RemoveConnection(clientIP, clientPort, portMap, b)
+				helper.RemoveConnection(clientIP, clientPort, portMap, b)
 			}
 		}
 	}

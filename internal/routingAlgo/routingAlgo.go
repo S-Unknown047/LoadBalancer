@@ -5,8 +5,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	helper "github.com/S-Unknown047/LoadBalancer/Helper"
-	model "github.com/S-Unknown047/LoadBalancer/Model"
+	helper "github.com/S-Unknown047/LoadBalancer/internal/helper"
+	model "github.com/S-Unknown047/LoadBalancer/internal/model"
 )
 
 var Mu sync.Mutex

@@ -4,7 +4,7 @@ import (
 	"container/heap"
 	"sync"
 
-	model "github.com/S-Unknown047/LoadBalancer/Model"
+	model "github.com/S-Unknown047/LoadBalancer/internal/model"
 )
 
 type ServerHeap []*model.Server

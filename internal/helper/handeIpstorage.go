@@ -1,4 +1,4 @@
-package natmode
+package helper
 
 import (
 	"fmt"
@@ -8,8 +8,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	helper "github.com/S-Unknown047/LoadBalancer/Helper"
-	model "github.com/S-Unknown047/LoadBalancer/Model"
+	model "github.com/S-Unknown047/LoadBalancer/internal/model"
 )
 
 type ConnectionState struct {
@@ -41,7 +40,7 @@ func RemoveConnection(clientIP string, clientPort uint16, portMap uint16, b *mod
 
 		if srv.IP == state.BackendIP && port == state.BackendPort {
 			atomic.AddUint64(&srv.Connection, ^uint64(0)) // Atomic decrement by 1
-			helper.HeapFix(srv)
+			HeapFix(srv)
 			atomic.AddUint64(&b.TotalServerConnection, ^uint64(0)) // Atomic decrement by 1
 			break
 		}

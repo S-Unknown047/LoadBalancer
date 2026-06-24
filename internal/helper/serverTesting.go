@@ -1,11 +1,11 @@
-package serverTesting
+package helper
 
 import (
 	"fmt"
 	"net"
 	"time"
 
-	model "github.com/S-Unknown047/LoadBalancer/Model"
+	model "github.com/S-Unknown047/LoadBalancer/internal/model"
 )
 
 var allServer *([]model.Server)
